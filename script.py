@@ -8,6 +8,7 @@ from PyQt5.QtCore import *
 import random
 import datetime
 import math
+import binascii
 from functools import reduce
 
 USAGE = "./script.py OR python3 script.py WITHOUT ARGUMENTS"
@@ -55,10 +56,7 @@ class Company():
     def __str__(self):
         return (self.name + "/"
                 + self.address + "/"
-                + str(self.employeeNumber) + "/"
-                + str(self.depth) + "/"
-                + self.parent + "/"
-                + str(self.children))
+                + "Paris/75012/" + hex(int("0145464948"))[2:])
 
 class Product():
     
@@ -68,9 +66,9 @@ class Product():
         self.price = random.random() * 100
 
     def __str__(self):
-        return (self.name
-                + str(self.quantity)
-                + str(self.price))
+        return (str(self.quantity) + "|"
+                + self.name + "|"
+                + "{:.2f}".format(self.price))
 
     def __add__(self, other):
         return (self.price * self.quantity) + (other.price * other.quantity)
@@ -90,14 +88,15 @@ class Receipt():
         self.currency = random.choice(CURRENCIES)
 
     def __str__(self):
-        return (str(self.user) + "/"
-                + str(self.company) + "/"
-                + str(self.date) + "/"
-                + str([str(product) for product in self.cart]) + "/"
-                + self.paymentMethod + "/"
-                + "{0:.2f}".format(self.totalPrice) + "/"
-                + str(self.change) + "/"
-                + self.currency)
+        res = (str(self.company) + "/"
+                + "01062016123045" + "/"
+                + "{:.2f}".format(self.change) + "/"
+                + self.paymentMethod + "/")
+        for i, product in enumerate(self.cart):
+            res += str(product)
+            if (i < len(self.cart) - 1):
+                res += "/"
+        return res
 
 class GenerateReceiptPrintQrCode(QWidget):
 
@@ -126,15 +125,22 @@ class GenerateReceiptPrintQrCode(QWidget):
         self.generateQrCode()
 
     def generateQrCode(self):
-        print(str(self.receipt))
+        receiptRepr = "avc"# + '"' + str(self.receipt) + '"aa'
+        print("alo: ", receiptRepr)
         os.system("qr {} > {}".format(str(self.receipt), DUMP_PICFILE))
         self.picture.swap(QPixmap(DUMP_PICFILE))
         self.label.setPixmap(self.picture)
 
 def main():
+    receipt = Receipt()
+    receiptRepr = '"' + str(receipt) + '"'
+    print(receiptRepr)
+    os.system("qr {} > {}".format(receiptRepr, DUMP_PICFILE))
+    """
     app = QApplication(sys.argv)
     mainWindow = GenerateReceiptPrintQrCode()
     sys.exit(app.exec_())
+    """
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
